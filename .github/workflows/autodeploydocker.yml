@@ -19,7 +19,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-#      - name: application.yml 복사
+      #      - name: application.yml 복사
 
       - name: application 실행파일 빌드
         run: chmod +x ./gradlew && ./gradlew clean build
@@ -35,3 +35,27 @@ jobs:
 
       - name: docker hub 에 push 하기
         run: docker push ${{ secrets.DOCKER_USER }}/web-app:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-job
+
+    steps:
+      - name: SSH 로 EC2 접속하기
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{secrets.EC2_HOST}}
+          username: ${{secrets.EC2_USERNAME}}
+          key: ${{secrets.EC2_PRIVATE_KEY}}
+          script_stop: true
+          script: |
+            # dockerhub 에 토큰을 가지고 로그인
+            echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | \
+            docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+            # 기존에 컨테이너 중지 & 삭제
+            docker stop web-app || true
+            docker rm web-app || true
+            # docker 이미지 풀
+            docker pull ${{ secrets.DOCKER_USER }}/web-app:latest
+            # 새로운 컨테이너 실행
+            docker run -d -p 8080:8080 --name web-app ${{ secrets.DOCKER_USER }}/web-app:latest
