@@ -53,9 +53,9 @@ jobs:
             echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | \
             docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
             # 기존에 컨테이너 중지 & 삭제
-            docker stop web-app || true
-            docker rm web-app || true
+            sudo docker stop web-app || true
+            sudo docker rm web-app || true
             # docker 이미지 풀
-            docker pull ${{ secrets.DOCKER_USER }}/web-app:latest
+            sudo docker pull ${{ secrets.DOCKER_USER }}/web-app:latest
             # 새로운 컨테이너 실행
-            docker run -d -p 8080:8080 --name web-app ${{ secrets.DOCKER_USER }}/web-app:latest
+            sudo docker run -d -p 8080:8080 --name web-app ${{ secrets.DOCKER_USER }}/web-app:latest
